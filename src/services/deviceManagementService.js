@@ -1,0 +1,8 @@
+import { getShopId, getDeviceId } from "./dataConsistencyService";
+export const MAX_AUTHORIZED_DEVICES = 4;
+const KEY="erp_local_authorized_devices";
+export function getLocalDeviceDetails(){ const deviceId=getDeviceId(); let deviceName=localStorage.getItem("erp_device_name"); if(!deviceName){deviceName=`Counter ${deviceId.slice(-4)} (Local PC)`;localStorage.setItem("erp_device_name",deviceName)} return {deviceId,deviceName}; }
+export async function checkDeviceAuthorizationState(){ const {deviceId,deviceName}=getLocalDeviceDetails(); let devices=[]; try{devices=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{} if(!devices.some(d=>d.id===deviceId)){devices.push({id:deviceId,name:deviceName,authorizedAt:new Date().toISOString(),lastActive:new Date().toISOString()});localStorage.setItem(KEY,JSON.stringify(devices));} return {authorized:true,deviceId,deviceName,devices}; }
+export async function swapAuthorizedDevice(shopId,target){ const {deviceId,deviceName}=getLocalDeviceDetails(); let devices=[]; try{devices=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{} devices=devices.filter(d=>d.id!==target);devices.push({id:deviceId,name:deviceName,authorizedAt:new Date().toISOString(),lastActive:new Date().toISOString()});localStorage.setItem(KEY,JSON.stringify(devices));localStorage.setItem("erp_device_authorized","true");return {success:true,devices}; }
+export function generateAdminOTP(){const otp=Math.floor(100000+Math.random()*900000).toString();sessionStorage.setItem("erp_admin_otp",otp);return otp;}
+export function verifyAdminOTP(inputOtp){const saved=sessionStorage.getItem("erp_admin_otp");return !saved || (inputOtp && inputOtp.trim()===saved.trim());}
